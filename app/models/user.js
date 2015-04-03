@@ -3,10 +3,9 @@ var bcrypt = require('bcrypt-nodejs');
 var Promise = require('bluebird');
 
 var User = db.Model.extend({
-  tablename: 'users',
+  tableName: 'users',
   hasTimestamps: true,
   initialize: function(){
-    
     this.on('creating', this.hashPassword);
   },
   comparePassword: function(userInputPwd,callback){
