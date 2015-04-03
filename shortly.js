@@ -10,7 +10,6 @@ var User = require('./app/models/user');
 var Links = require('./app/collections/links');
 var Link = require('./app/models/link');
 var Click = require('./app/models/click');
-
 var app = express();
 
 app.set('views', __dirname + '/views');
@@ -22,11 +21,18 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
+// SESSION SUPPORT
+var session = require('express-session');
+app.use(session({
+  secret: 'keep it secret, keep it safe',
+  resave: false,
+  saveUninitialized: true
+}));
 
-app.get('/', 
-function(req, res) {
+app.get('/', util.checkUser, function(req, res) {
   res.render('index');
 });
+
 
 app.get('/create', 
 function(req, res) {
@@ -78,7 +84,56 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
+app.get('/signup', function(req,res){
+  res.render('signup')
+})
 
+app.post('/signup',function(req, res){
+  var username = req.body.username;
+  var password = req.body.password;
+
+  console.log('posting to signup',username)
+  new User({username: username}).fetch().then(function(user){
+    if(!user){
+      console.log('false conditional')
+      var newUser = new User({
+        username: username,
+        password: password
+      });
+
+      newUser.save().then(function(savedUser){
+        util.createSession(req,res, savedUser);
+      })
+    }else{
+      console.log('account exists');
+      res.redirect('/signup')
+    }
+  })
+
+})
+
+app.get('/login', function(req, res){
+  res.render('login');
+});
+
+app.post('/login', function(req, res){
+  var username = req.body.username;
+  var password = req.body.password;
+
+  new User({'username': username}).fetch().then(function(user){
+    if ( !user ) {
+      res.redirect('/login');
+    } else {
+      user.comparePassword(password, function(match){
+        if ( match ) {
+          util.createSession(req, res, user);
+        } else {
+          res.redirect('/login');
+        }
+      });
+    }
+  });
+});
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
