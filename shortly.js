@@ -30,7 +30,7 @@ function(req, res) {
 
 app.get('/create', 
 function(req, res) {
-  res.render('index');
+  res.render('signup');
 });
 
 app.get('/links', 
